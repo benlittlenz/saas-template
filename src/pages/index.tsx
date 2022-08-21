@@ -1,11 +1,25 @@
 import type { NextPage } from "next";
 import Head from "next/head";
+import { z } from "zod";
+import { Button } from "../ui/Button";
+import { Form } from "../ui/form/Form";
+import { Input } from "../ui/form/Input";
 import { trpc } from "../utils/trpc";
+
+const schema = z.object({
+  blah: z.string().min(2),
+  hey: z.string().min(50),
+});
 
 type TechnologyCardProps = {
   name: string;
   description: string;
   documentation: string;
+};
+
+type TestValues = {
+  blah: string;
+  hey: string;
 };
 
 const Home: NextPage = () => {
@@ -49,6 +63,31 @@ const Home: NextPage = () => {
         <div className="pt-6 text-2xl text-blue-500 flex justify-center items-center w-full">
           {hello.data ? <p>{hello.data.greeting}</p> : <p>Loading..</p>}
         </div>
+        <Form<TestValues, typeof schema>
+          onSubmit={(values) => console.log(values)}
+          schema={schema}
+          options={{
+            shouldUnregister: true,
+          }}
+        >
+          {({ register, formState }) => (
+            <>
+              <Input
+                label="Blah field"
+                type="text"
+                name="blah"
+                registration={register("blah")}
+              />
+              <Input
+                label="Hey field"
+                type="text"
+                name="hey"
+                registration={register("hey")}
+              />
+              <Button type="submit">Click here</Button>
+            </>
+          )}
+        </Form>
       </main>
     </>
   );

@@ -74,7 +74,7 @@ export const Button = React.forwardRef<
           ? "cursor-wait"
           : disabled
           ? "cursor-not-allowed"
-          : "cursor-pointer"
+          : "cursor-pointer",
       ),
       onClick: disabled
         ? (e: React.MouseEvent<HTMLElement, MouseEvent>) => e.preventDefault()
@@ -84,7 +84,7 @@ export const Button = React.forwardRef<
       {startIcon && !isLoading && startIcon}
       {props.children}
       {endIcon && !isLoading && endIcon}
-    </>
+    </>,
   );
 
   return props.href ? (
