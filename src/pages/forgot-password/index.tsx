@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { Button } from "../../ui/Button";
 import { Form } from "../../ui/form/Form";
 import { Input } from "../../ui/form/Input";
+import AuthContainer from "../../ui/layout/AuthContainer";
 import { trpc } from "../../utils/trpc";
 import { forgotPasswordSchema, loginSchema } from "../../utils/validation/auth";
 
@@ -12,12 +13,15 @@ type ForgotPasswordValues = {
 const ForgotPasswordPage = () => {
   const router = useRouter();
 
-  const { mutateAsync } = trpc.useMutation(["user.forgot-password"], {
-    onSuccess: () => console.log("SUCCESS"),
-  });
-
+  const { isLoading, mutateAsync } = trpc.useMutation(
+    ["user.forgot-password"],
+    {
+      onSuccess: () => console.log("SUCCESS"),
+    },
+  );
+  console.log("isLoading", isLoading);
   return (
-    <div>
+    <AuthContainer title="Forgot password">
       <Form<ForgotPasswordValues, typeof forgotPasswordSchema>
         onSubmit={async (values) => {
           console.log("VALUES HERE", values);
@@ -37,13 +41,17 @@ const ForgotPasswordPage = () => {
               name="email"
               registration={register("email")}
             />
-            <Button type="submit" onClick={() => console.log("CLICKED")}>
+            <Button
+              type="submit"
+              isLoading={isLoading}
+              onClick={() => console.log("CLICKED")}
+            >
               Reset Password
             </Button>
           </>
         )}
       </Form>
-    </div>
+    </AuthContainer>
   );
 };
 

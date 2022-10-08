@@ -1,10 +1,12 @@
-import { GetServerSideProps } from "next";
+import { GetServerSideProps, GetServerSidePropsContext } from "next";
 import { getSession, signIn } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import React from "react";
 import { Button } from "../ui/Button";
 import { Form } from "../ui/form/Form";
 import { Input } from "../ui/form/Input";
+import AuthContainer from "../ui/layout/AuthContainer";
 import { trpc } from "../utils/trpc";
 import { loginSchema } from "../utils/validation/auth";
 
@@ -16,10 +18,12 @@ type LoginValues = {
 const LoginPage = ({ session }: any) => {
   const [error, setError] = React.useState<string | null>(null);
   const router = useRouter();
-  console.log("SESSION >>> ", session);
+
   return (
-    <div>
-      {error && <div className="text-red-500">{error}</div>}
+    <AuthContainer title="Sign in to your account">
+      {error && (
+        <p className="mb-2 text-sm font-semibold text-red-500">{error}</p>
+      )}
       <Form<LoginValues, typeof loginSchema>
         onSubmit={async (values) => {
           const res = await signIn("credentials", {
@@ -30,7 +34,6 @@ const LoginPage = ({ session }: any) => {
           if (res?.ok) {
             router.push("/dashboard");
           } else {
-            console.log("Password does not match", res);
             setError("Credentials do not match our records");
           }
         }}
@@ -43,7 +46,7 @@ const LoginPage = ({ session }: any) => {
           <>
             <Input
               label="Email"
-              type="text"
+              type="email"
               name="email"
               registration={register("email")}
             />
@@ -53,29 +56,41 @@ const LoginPage = ({ session }: any) => {
               name="password"
               registration={register("password")}
             />
-            <Button type="submit">Register</Button>
+            <Button type="submit" className="w-full">
+              Login
+            </Button>
           </>
         )}
       </Form>
-    </div>
+      <div className="pt-2">
+        <span className="font-medium text-sm text-gray-900">
+          Don't have an account?{" "}
+        </span>
+        <Link href="/register">
+          <a className="text-sm font-semibold text-gray-900 hover:underline">
+            Create an account
+          </a>
+        </Link>
+      </div>
+    </AuthContainer>
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context: any) => {
-  const session = await getSession(context);
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  const { req } = ctx;
+  const session = await getSession({ req });
 
-  //   if (!session) {
-  //     return {
-  //       redirect: {
-  //         destination: "/",
-  //         permanent: false,
-  //       },
-  //     };
-  //   }
-
+  if (session) {
+    return {
+      redirect: {
+        destination: "/dashboard",
+        permanent: false,
+      },
+    };
+  }
   return {
-    props: { session },
+    props: {},
   };
-};
+}
 
 export default LoginPage;

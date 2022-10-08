@@ -25,60 +25,43 @@ const ResetPasswordPage = ({
   resetPasswordRequest,
   csrfToken,
 }: ResetPasswordProps) => {
-  const [error, setError] = React.useState<{ message: string } | null>(null);
-  const [success, setSuccess] = React.useState(false);
-
-  const { mutateAsync } = trpc.useMutation(["user.reset-password"], {
-    onSuccess: () => setSuccess(true),
-    onError: (error) => console.log("ERROR", error),
-  });
+  const { error, status, mutateAsync } = trpc.useMutation(
+    ["user.reset-password"],
+    {
+      onSuccess: () => console.log("Success"),
+      onError: (error) => console.log("ERROR", error),
+    },
+  );
 
   const Success = () => {
     return (
-      <>
-        <div className="space-y-6">
-          <div>
-            <h2 className="font-cal mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Success!
-            </h2>
-          </div>
-          <p>Password has been reset. Please login.</p>
-          <Link href="/login">
-            <button
-              type="button"
-              className="flex w-full justify-center px-4 py-2 text-sm font-medium text-blue-600 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
-            >
-              Login
-            </button>
-          </Link>
+      <div className="space-y-6">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Password has been successfully reset
+          </h2>
         </div>
-      </>
+        <Button>
+          <Link href="/login">Login</Link>
+        </Button>
+      </div>
     );
   };
 
   const Expired = () => {
     return (
-      <>
-        <div className="space-y-6">
-          <div>
-            <h2 className="font-cal mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Something went wrong.
-            </h2>
-            <h2 className="text-center text-3xl font-extrabold text-gray-900">
-              Request has expired.
-            </h2>
-          </div>
-          <p>Please submit a new request to reset your password</p>
-          <Link href="/auth/forgot-password" passHref>
-            <button
-              type="button"
-              className="flex w-full justify-center px-4 py-2 text-sm font-medium text-blue-600 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
-            >
-              Try again
-            </button>
-          </Link>
+      <div className="space-y-6">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Something went wrong.
+          </h2>
+          <h2 className="text-center text-2xl font-extrabold text-gray-900">
+            Request has expired.
+          </h2>
         </div>
-      </>
+        <p>Please submit a new request to reset your password</p>
+        <Button href="/forgot-password">Try again</Button>
+      </div>
     );
   };
 
@@ -87,12 +70,14 @@ const ResetPasswordPage = ({
     return dayjs(resetPasswordRequest.expires).isBefore(now);
   }, [resetPasswordRequest]);
 
+  type Blah = Omit<typeof resetPasswordSchema, "resetToken">;
+  type IReset = Omit<IResetPassword, "resetToken">;
   return (
     <div className="flex min-h-screen flex-col justify-center bg-gray-50 py-12 sm:px-6 lg:px-8">
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="mx-2 space-y-6 rounded-lg bg-white px-4 py-8 shadow sm:px-10">
           {isRequestExpired && <Expired />}
-          {!isRequestExpired && !success && (
+          {!isRequestExpired && status !== "success" && (
             <>
               <div className="space-y-6">
                 <h2 className="font-cal mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -101,7 +86,7 @@ const ResetPasswordPage = ({
                 <p>Enter a new password</p>
                 {error && <p className="text-red-600">{error.message}</p>}
               </div>
-              <Form<IResetPassword, typeof resetPasswordSchema>
+              <Form<IReset, Blah>
                 onSubmit={async (values) => {
                   console.log("VALUES HERE", values);
                   await mutateAsync({ ...values, resetToken });
@@ -111,33 +96,31 @@ const ResetPasswordPage = ({
                   shouldUnregister: true,
                 }}
               >
-                {({ register }) => (
-                  <>
-                    <Input
-                      name="resetToken"
-                      defaultValue={csrfToken}
-                      hidden
-                      registration={register("resetToken")}
-                    />
-                    <Input
-                      label="Password"
-                      type="password"
-                      name="password"
-                      registration={register("password")}
-                    />
-                    <Input
-                      label="Confirm password"
-                      type="password"
-                      name="passwordConfirm"
-                      registration={register("passwordConfirm")}
-                    />
-                    <Button type="submit">Register</Button>
-                  </>
-                )}
+                {({ register, formState }) => {
+                  console.log("ERROR >>> ", formState);
+                  return (
+                    <>
+                      <input type="hidden" hidden defaultValue={csrfToken} />
+                      <Input
+                        label="Password"
+                        type="password"
+                        name="password"
+                        registration={register("password")}
+                      />
+                      <Input
+                        label="Confirm password"
+                        type="password"
+                        name="passwordConfirm"
+                        registration={register("passwordConfirm")}
+                      />
+                      <Button type="submit">Register</Button>
+                    </>
+                  );
+                }}
               </Form>
             </>
           )}
-          {!isRequestExpired && success && (
+          {!isRequestExpired && status === "success" && (
             <>
               <Success />
             </>
@@ -172,7 +155,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         csrfToken: await getCsrfToken({ req: context.req }),
       },
     };
-  } catch (reason) {
+  } catch (e) {
     return {
       notFound: true,
     };

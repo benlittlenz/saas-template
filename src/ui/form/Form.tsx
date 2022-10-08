@@ -37,6 +37,7 @@ export const Form = <
     ...options,
     resolver: schema && zodResolver(schema),
   });
+
   return (
     <FormProvider {...methods}>
       <form
