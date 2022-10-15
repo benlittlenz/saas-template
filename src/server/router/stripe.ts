@@ -1,7 +1,6 @@
 import { NextApiRequest } from 'next';
 import { forgotPasswordSchema, registerSchema, resetPasswordSchema } from './../../utils/validation/auth';
 import { createRouter } from "./context";
-import * as trpc from "@trpc/server";
 import { TRPCError } from '@trpc/server';
 import { stripe } from '../../utils/stripe';
 
